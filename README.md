@@ -1,80 +1,101 @@
-# CSE 510 Warm-Up Assignment: Text Preprocessing Web Service
+# CSE 510 Operational Assignment 3: Text Preprocessing Web Service
 
-Welcome to the warm-up assignment for CSE 510! This assignment will help you get familiar with text preprocessing, web development with Flask, and working with Project Gutenberg texts before diving into the main Shannon Information Theory assignment.
+This was a scaffolding assignment for CSE 510 where I built a small web service that pulls books from Project Gutenberg, cleans them up, and shows some basic stats about the text.
 
-## 🎯 Assignment Overview
+## Assignment Overview
 
-You'll build a web service that:
+The web service does four main things:
 - Fetches text from Project Gutenberg URLs
 - Cleans and preprocesses the text
 - Provides statistical analysis
 - Returns results via a clean web interface
 
-## 🚀 Quick Start
+## Quick Start
 
 ### 1. Environment Setup
 
-First, test your environment:
-```bash
-python test_setup.py
-```
+First, I tested the environment:
+I used the command : python test_setup.py
 
-If all tests pass, you're ready to go! If not, install missing packages:
-```bash
-pip install -r requirements.txt
-```
+A few tests didn't get carried along, so I install missing packages:
+I used the command : pip install -r requirements.txt
 
-### 2. Run the Application
+### 2. Running the Application
 
-Start the Flask development server:
-```bash
-python app.py
-```
+Started the Flask development server:
+I used the command : python app.py
 
-Open your browser to: http://localhost:5000
+### 3. Testing the Interface
 
-### 3. Test the Interface
-
-The web interface includes example URLs you can click to test:
+The web interface includes example URLs we can click to test:
 - Pride and Prejudice by Jane Austen
-- Frankenstein by Mary Shelley  
+- Frankenstein by Mary Shelley
 - Alice in Wonderland by Lewis Carroll
 - Moby Dick by Herman Melville
 
-## 📝 What You Need to Implement
+---
 
-### Part 1: Environment Setup (10 points)
-- Run `test_setup.py` and ensure all tests pass
-- Verify you can access Project Gutenberg URLs
+## Outputs
 
-### Part 2: TextPreprocessor Methods (25 points)
+### Part 1 — test_setup.py Output
+This confirms the environment was set up correctly and all packages loaded without issues.
 
-Complete these methods in `starter_preprocess.py`:
+![alt text](<Screenshot 2026-04-13 at 5.07.23 PM.png>)
+
+### Part 2 — Flask Server Running
+The terminal output showing the app is live.
+
+![alt text](<Screenshot 2026-04-13 at 5.16.15 PM.png>)
+
+![alt text](<Screenshot 2026-04-13 at 5.18.23 PM.png>)
+
+### Part 3 — Web Interface Home Page
+The main page where you paste in a Gutenberg URL and hit the button to analyze it.
+
+![alt text](<Screenshot 2026-04-14 at 3.57.23 PM.png>)
+
+### Part 4 — Analysis Results
+The results page showing stats, a 3-sentence summary, and the first 500 characters of cleaned text — tested here with all 4 Books.
+
+![alt text](<Screenshot 2026-04-13 at 5.26.24 PM-1.png>)
+![alt text](<Screenshot 2026-04-13 at 5.26.35 PM.png>)
+
+![alt text](<Screenshot 2026-04-13 at 5.27.43 PM.png>)
+![alt text](<Screenshot 2026-04-13 at 5.27.56 PM.png>)
+
+![alt text](<Screenshot 2026-04-13 at 5.28.54 PM.png>)
+![alt text](<Screenshot 2026-04-13 at 5.29.07 PM.png>)
+
+![alt text](<Screenshot 2026-04-13 at 5.30.21 PM.png>)
+![alt text](<Screenshot 2026-04-13 at 5.30.35 PM.png>)
+
+---
+
+## What Was Implemented
+
+### Part 1: Environment Setup
+Forked the starter repo, opened it in a GitHub Codespace, ran `python --version` to confirm Python 3.9+, installed all dependencies via `pip install -r requirements.txt`, and ran `test_setup.py` to verify everything was working before moving on.
+
+### Part 2: TextPreprocessor Methods
+
+Added three methods to the `TextPreprocessor` class in `starter_preprocess.py`:
 
 #### `fetch_from_url(url: str) -> str`
-- Download text content from a Project Gutenberg URL
-- Validate that the URL ends with `.txt`
-- Handle network errors appropriately
-- Return the raw text content
+To check that the URL ends in `.txt` before doing anything, then used the `requests` library to download the raw text. I added proper error handling for timeouts, connection failures, and bad HTTP responses so it fails with a clear message rather than an ugly traceback.
 
 #### `get_text_statistics(text: str) -> Dict`
-- Return a dictionary with:
-  - `total_characters`: Total character count
-  - `total_words`: Total word count  
-  - `total_sentences`: Total sentence count
-  - `avg_word_length`: Average word length
-  - `avg_sentence_length`: Average sentence length (words per sentence)
-  - `most_common_words`: List of top 10 most common words
+Goes through the cleaned text and calculates total characters, total words, total sentences, average word length, and average sentence length. It also finds the top 10 most used words — with common stop words like "the," "and," "a" filtered out so you actually get something interesting back.
 
 #### `create_summary(text: str, num_sentences: int = 3) -> str`
-- Extract the first N sentences from the cleaned text
-- Return as a single string
+Splits the text into sentences using a regex pattern and returns the first three joined together as one string. It is a simple extractive approach but works well as a quick preview of what the book is about.
 
-### Part 3: Flask API Endpoints (10 points)
+### Part 3: Flask API Endpoints
 
-Complete these endpoints in `app.py`:
+Built two working endpoints in `app.py`:
 
 #### `POST /api/clean`
+Took a JSON body with a Gutenberg URL, ran it through the full pipeline — fetch, clean, normalize, get stats, generated summary — and returned everything as a single JSON response. Returns `success: true` on a good run and `success: false` with an error message if anything goes wrong.
+
 Expected input:
 ```json
 {"url": "https://www.gutenberg.org/files/1342/1342-0.txt"}
@@ -91,13 +112,15 @@ Expected output:
         "total_sentences": 6403,
         "avg_word_length": 4.3,
         "avg_sentence_length": 19.5,
-        "most_common_words": ["the", "to", "of", "and", "a", ...]
+        "most_common_words": ["mr", "elizabeth", "darcy", ...]
     },
     "summary": "It is a truth universally acknowledged..."
 }
 ```
 
 #### `POST /api/analyze`
+Took raw text directly instead of a URL, skipped the fetching and cleaning steps, and returned the statistics.
+
 Expected input:
 ```json
 {"text": "Your raw text here..."}
@@ -111,66 +134,70 @@ Expected output:
 }
 ```
 
-### Part 4: Frontend Integration (5 points)
+### Part 4: Frontend Integration
 
-Complete the JavaScript in `templates/index.html`:
-- Implement the form submission handler
-- Make proper API calls to `/api/clean`
-- Handle responses and errors
-- Display results using the provided `displayResults()` function
+Finished the JavaScript in `templates/index.html` to wire everything together. The form grabs the URL you type in, sends it to `/api/clean` using a `fetch()` POST call, and then hands the response off to `displayResults()` which fills in all the stat cards, the summary box, and the text preview. If something fails — bad URL, slow server, wrong format — it shows a readable error message at the top instead of silently breaking.
 
-## 🧪 Testing Your Implementation
+---
+
+## Testing Implementation
 
 ### Manual Testing
-1. Start the server: `python app.py`
-2. Open http://localhost:5000
-3. Try the example URLs
-4. Verify statistics make sense
+1. Started the server: `python app.py`
+2. Opened http://localhost:5000
+3. Tried the example URLs
+4. Verified statistics
 
 ### Code Testing
-```bash
-# Test individual components
+
+# Testing individual components
 python starter_preprocess.py
 
-# Test specific methods
+# Testing specific methods
 python -c "
-from starter_preprocess import TextPreprocessor
+from starter_preprocess imported TextPreprocessor
 tp = TextPreprocessor()
-# Test your implementations here
-"
-```
 
-## 📁 Project Structure
+---
 
-```
-warmup-starter-repo/
-├── README.md                    # This file
+## Project Structure
+
+scaffolding3_startup/
+├── README.md                    
 ├── requirements.txt             # Python dependencies
-├── test_setup.py               # Environment validation
-├── app.py                      # Flask application (TODO: implement endpoints)
-├── starter_preprocess.py       # Text processing (TODO: implement methods)
+├── test_setup.py                # Environment validation
+├── app.py                       # Flask application
+├── starter_preprocess.py        # Text preprocessing class
+├── screenshots/
+│   ├── test_setup.png
+│   ├── server_running.png
+│   ├── home_page.png
+│   └── results.png
 └── templates/
-    └── index.html              # Web interface (TODO: implement API calls)
-```
+└── index.html              
 
-## 🎓 Learning Objectives
+---
 
-By completing this assignment, you will:
-- Understand text preprocessing fundamentals
-- Learn basic web API development with Flask
-- Practice working with external data sources
-- Gain experience with JSON APIs and frontend integration
-- Build confidence for the main Shannon assignment
+## Learning Objectives
 
-## 💡 Tips for Success
+- Understanding text preprocessing fundamentals
+- Learning basic web API development with Flask
+- Practicing working with external data sources
+- Gained experience with JSON APIs and frontend integration
 
-1. **Start with Part 2**: Implement the TextPreprocessor methods first
-2. **Test incrementally**: Test each method as you implement it
-3. **Use the existing methods**: The starter code provides helper methods for tokenization
-4. **Handle errors gracefully**: Project Gutenberg URLs can sometimes be slow
+---
+
+## Methodology
+
+1. **Started with Part 2**: Implemented the TextPreprocessor methods first
+2. **Tested incrementally**: Tested each method as I implement it
+3. **Used the existing methods**: The starter code provided helper methods for tokenization
+4. **Handled errors**: Project Gutenberg URLs was sometimes slow
 5. **Read the comments**: The TODO comments provide helpful hints
 
-## 🆘 Common Issues
+---
+
+## Common Issues
 
 **"Module not found" errors**: Run `pip install -r requirements.txt`
 
@@ -180,20 +207,13 @@ By completing this assignment, you will:
 
 **Port already in use**: Kill existing Flask processes or use a different port
 
-## 📚 Resources
+---
+
+## Resources
 
 - [Flask Documentation](https://flask.palletsprojects.com/)
 - [Requests Library](https://requests.readthedocs.io/)
 - [Project Gutenberg](https://www.gutenberg.org/)
 - [Regular Expressions in Python](https://docs.python.org/3/library/re.html)
 
-## 🎯 Grading Rubric
-
-- **Environment Setup (10 points)**: `test_setup.py` passes all tests
-- **TextPreprocessor Implementation (25 points)**: All three methods work correctly
-- **Flask API Endpoints (10 points)**: Both endpoints return proper JSON responses  
-- **Frontend Integration (5 points)**: Web interface successfully calls APIs and displays results
-
-**Total: 50 points**
-
-Good luck! This assignment prepares you for the main Shannon Information Theory assignment where you'll implement n-gram models and text generation using similar preprocessing techniques.
+---

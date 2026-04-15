@@ -27,39 +27,44 @@ def health_check():
 
 @app.route('/api/clean', methods=['POST'])
 def clean_text():
-    """
-    TODO: Implement this endpoint for Part 3
-    
-    API endpoint that accepts a URL and returns cleaned text
-    
-    Expected JSON input:
-        {"url": "https://www.gutenberg.org/files/1342/1342-0.txt"}
-    
-    Returns JSON:
-        {
-            "success": true/false,
-            "cleaned_text": "...",
-            "statistics": {...},
-            "summary": "...",
-            "error": "..." (if applicable)
-        }
-    """
     try:
-        # TODO: Get JSON data from request
-        # TODO: Extract URL from the JSON
-        # TODO: Validate URL (should be .txt)
-        # TODO: Use preprocessor.fetch_from_url() 
-        # TODO: Clean the text with preprocessor.clean_gutenberg_text()
-        # TODO: Normalize with preprocessor.normalize_text()
-        # TODO: Get statistics with preprocessor.get_text_statistics()
-        # TODO: Create summary with preprocessor.create_summary()
-        # TODO: Return JSON response
-        
+        # Get JSON data from request
+        data = request.get_json()
+
+        # Validate that JSON was sent
+        if not data or 'url' not in data:
+            return jsonify({"success": False, "error": "No URL provided"}), 400
+
+        # Extract URL from the JSON
+        url = data['url'].strip()
+
+        # Validate URL (should be .txt)
+        if not url.endswith('.txt'):
+            return jsonify({"success": False, "error": "URL must point to a .txt file"}), 400
+
+        # Fetch raw text from URL
+        raw_text = preprocessor.fetch_from_url(url)
+
+        # Clean the text
+        cleaned_text = preprocessor.clean_gutenberg_text(raw_text)
+
+        # Normalize the text
+        normalized_text = preprocessor.normalize_text(cleaned_text)
+
+        # Get statistics
+        statistics = preprocessor.get_text_statistics(normalized_text)
+
+        # Create summary
+        summary = preprocessor.create_summary(cleaned_text, num_sentences=3)
+
+        # Return JSON response
         return jsonify({
-            "success": False,
-            "error": "Not implemented yet - complete this for Part 3!"
-        }), 501
-        
+            "success": True,
+            "cleaned_text": cleaned_text,
+            "statistics": statistics,
+            "summary": summary
+        })
+
     except Exception as e:
         return jsonify({
             "success": False,
@@ -68,32 +73,26 @@ def clean_text():
 
 @app.route('/api/analyze', methods=['POST'])
 def analyze_text():
-    """
-    TODO: Implement this endpoint for Part 3
-    
-    API endpoint that accepts raw text and returns statistics only
-    
-    Expected JSON input:
-        {"text": "Your raw text here..."}
-    
-    Returns JSON:
-        {
-            "success": true/false,
-            "statistics": {...},
-            "error": "..." (if applicable)
-        }
-    """
     try:
-        # TODO: Get JSON data from request
-        # TODO: Extract text from the JSON
-        # TODO: Get statistics with preprocessor.get_text_statistics()
-        # TODO: Return JSON response
-        
+        # Get JSON data from request
+        data = request.get_json()
+
+        # Validate that JSON was sent
+        if not data or 'text' not in data:
+            return jsonify({"success": False, "error": "No text provided"}), 400
+
+        # Extract text from the JSON
+        text = data['text']
+
+        # Get statistics
+        statistics = preprocessor.get_text_statistics(text)
+
+        # Return JSON response
         return jsonify({
-            "success": False,
-            "error": "Not implemented yet - complete this for Part 3!"
-        }), 501
-        
+            "success": True,
+            "statistics": statistics
+        })
+
     except Exception as e:
         return jsonify({
             "success": False,
@@ -125,5 +124,5 @@ if __name__ == '__main__':
     print()
     print("🌐 Open your browser to: http://localhost:5000")
     print("⏹️  Press Ctrl+C to stop the server")
-    
+
     app.run(debug=True, port=5000, host='0.0.0.0')

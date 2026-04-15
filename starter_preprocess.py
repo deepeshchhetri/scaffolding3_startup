@@ -63,9 +63,9 @@ class TextPreprocessor:
         text = text.lower()
         
         # Standardize quotes and dashes
-        text = re.sub(r'[""]', '"', text)
-        text = re.sub(r'['']', "'", text)
-        text = re.sub(r'—|–', '-', text)
+        text = re.sub(u'[\u201c\u201d]', '"', text)
+        text = re.sub(u'[\u2018\u2019]', "'", text)
+        text = re.sub(u'[\u2014\u2013]', '-', text)
         
         if preserve_sentences:
             # Keep sentence endings but remove other punctuation
@@ -118,49 +118,109 @@ class TextPreprocessor:
     
     def fetch_from_url(self, url: str) -> str:
         """
-        TODO: Fetch text content from a URL (especially Project Gutenberg)
-        
+        Fetch text content from a URL (especially Project Gutenberg)
+
         Args:
             url: URL to a .txt file
-            
+
         Returns:
             Raw text content
-            
+
         Raises:
             Exception if URL is invalid or cannot be reached
         """
-        # Hint: Use requests.get() and validate that it's a .txt URL
-        # Don't forget error handling!
-        raise NotImplementedError("Implement this for Part 2 of the assignment")
-    
+        # Validate that it ends with .txt
+        if not url.endswith('.txt'):
+            raise Exception("URL must point to a .txt file")
+
+        try:
+            response = requests.get(url, timeout=10)
+            response.raise_for_status()
+            return response.text
+        except requests.exceptions.ConnectionError:
+            raise Exception("Could not connect to URL. Check your internet connection.")
+        except requests.exceptions.Timeout:
+            raise Exception("Request timed out. The server took too long to respond.")
+        except requests.exceptions.HTTPError as e:
+            raise Exception(f"HTTP error occurred: {str(e)}")
+        except Exception as e:
+            raise Exception(f"Failed to fetch URL: {str(e)}")
+
     def get_text_statistics(self, text: str) -> Dict:
         """
-        TODO: Calculate basic statistics about the text
-        
+        Calculate basic statistics about the text
+
         Returns dictionary with:
-            - total_characters
-            - total_words  
-            - total_sentences
-            - avg_word_length
-            - avg_sentence_length
-            - most_common_words (top 10)
+        - total_characters
+        - total_words
+        - total_sentences
+        - avg_word_length
+        - avg_sentence_length
+        - most_common_words (top 10)
         """
-        # Hint: Use the existing tokenize methods and Counter
-        raise NotImplementedError("Implement this for Part 2 of the assignment")
-    
+        # Count characters
+        total_characters = len(text)
+
+        # Split into words
+        words = re.findall(r'\b[a-zA-Z]+\b', text.lower())
+        total_words = len(words)
+
+        # Split into sentences
+        sentences = re.split(r'[.!?]+', text)
+        sentences = [s.strip() for s in sentences if s.strip()]
+        total_sentences = len(sentences)
+
+        # Average word length
+        if total_words > 0:
+            avg_word_length = round(sum(len(w) for w in words) / total_words, 2)
+        else:
+            avg_word_length = 0
+
+        # Average sentence length (in words)
+        if total_sentences > 0:
+            avg_sentence_length = round(total_words / total_sentences, 2)
+        else:
+            avg_sentence_length = 0
+
+        # Most common words (filter out common stop words)
+        stop_words = {
+            'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at',
+            'to', 'for', 'of', 'with', 'by', 'from', 'is', 'was',
+            'are', 'were', 'be', 'been', 'being', 'it', 'its', 'he',
+            'she', 'they', 'we', 'i', 'you', 'that', 'this', 'his',
+            'her', 'their', 'as', 'had', 'have', 'has', 'not', 'so'
+        }
+        filtered_words = [w for w in words if w not in stop_words]
+        most_common = Counter(filtered_words).most_common(10)
+        most_common_words = [{"word": w, "count": c} for w, c in most_common]
+
+        return {
+            "total_characters": total_characters,
+            "total_words": total_words,
+            "total_sentences": total_sentences,
+            "avg_word_length": avg_word_length,
+            "avg_sentence_length": avg_sentence_length,
+            "most_common_words": most_common_words
+        }
+
     def create_summary(self, text: str, num_sentences: int = 3) -> str:
         """
-        TODO: Create a simple extractive summary by returning the first N sentences
-        
+        Create a simple extractive summary by returning the first N sentences
+
         Args:
             text: Cleaned text
             num_sentences: Number of sentences to include
-            
+
         Returns:
             Summary string
         """
-        # Hint: Use tokenize_sentences() and join the first N sentences
-        raise NotImplementedError("Implement this for Part 2 of the assignment")
+        # Split text into sentences
+        sentences = re.split(r'(?<=[.!?])\s+', text)
+        sentences = [s.strip() for s in sentences if s.strip()]
+
+        # Return the first N sentences joined together
+        summary_sentences = sentences[:num_sentences]
+        return ' '.join(summary_sentences)
 
 
 class FrequencyAnalyzer:
